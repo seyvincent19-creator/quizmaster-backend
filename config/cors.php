@@ -23,6 +23,8 @@ return [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'http://167.71.206.69',
+        'https://phplaravel-1634699-6525085.cloudwaysapps.com',
+        'http://phplaravel-1634699-6525085.cloudwaysapps.com',
     ],
 
     'allowed_origins_patterns' => [],

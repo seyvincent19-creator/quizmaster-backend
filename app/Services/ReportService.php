@@ -27,8 +27,11 @@ class ReportService
         $usersQuery = User::query();
 
         if ($className || $generation) {
-            $attemptsQuery->join('users', 'quiz_attempts.user_id', '=', 'users.id');
-            $answersQuery->join('users', 'quiz_attempts.user_id', '=', 'users.id');
+            $attemptsQuery->join('users', 'quiz_attempts.user_id', '=', 'users.id')
+                ->join('classes', 'users.class_id', '=', 'classes.id');
+            $answersQuery->join('users', 'quiz_attempts.user_id', '=', 'users.id')
+                ->join('classes', 'users.class_id', '=', 'classes.id');
+            $usersQuery->join('classes', 'users.class_id', '=', 'classes.id');
         }
 
         if ($from) {
@@ -46,16 +49,16 @@ class ReportService
             $answersQuery->where('questions.difficulty', $difficulty);
         }
         if ($className) {
-            $attemptsQuery->where('users.class_name', $className);
-            $usersQuery->where('class_name', $className);
+            $attemptsQuery->where('classes.name', $className);
+            $usersQuery->where('classes.name', $className);
         }
         if ($generation) {
-            $attemptsQuery->where('users.generation', $generation);
-            $usersQuery->where('generation', $generation);
+            $attemptsQuery->where('classes.generation', $generation);
+            $usersQuery->where('classes.generation', $generation);
         }
 
-        $totalUsers = $usersQuery->count();
-        $activeUsers = (clone $usersQuery)->where('is_active', true)->count();
+        $totalUsers = $usersQuery->count('users.id');
+        $activeUsers = (clone $usersQuery)->where('users.is_active', true)->count('users.id');
         $totalAttempts = $attemptsQuery->count();
         $avgScore = round($attemptsQuery->avg('quiz_attempts.score') ?? 0, 2);
         $passCount = (clone $attemptsQuery)->where('quiz_attempts.score', '>=', 50)->count();
@@ -82,7 +85,8 @@ class ReportService
             ->orderBy('quiz_attempts.started_at', 'desc');
 
         if (!empty($filters['class_name']) || !empty($filters['generation'])) {
-            $query->join('users', 'quiz_attempts.user_id', '=', 'users.id');
+            $query->join('users', 'quiz_attempts.user_id', '=', 'users.id')
+                ->join('classes', 'users.class_id', '=', 'classes.id');
         }
 
         if (!empty($filters['from'])) {
@@ -98,10 +102,10 @@ class ReportService
             $query->where('quiz_attempts.score', '<=', $filters['max_score']);
         }
         if (!empty($filters['class_name'])) {
-            $query->where('users.class_name', $filters['class_name']);
+            $query->where('classes.name', $filters['class_name']);
         }
         if (!empty($filters['generation'])) {
-            $query->where('users.generation', $filters['generation']);
+            $query->where('classes.generation', $filters['generation']);
         }
 
         return $query->select('quiz_attempts.*')->paginate($perPage);

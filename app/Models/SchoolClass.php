@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Subject extends Model
+class SchoolClass extends Model
 {
-    protected $fillable = ['name', 'department_id', 'description', 'is_active'];
+    protected $table = 'classes';
+
+    protected $fillable = ['name', 'department_id', 'year_of_study', 'generation', 'is_active'];
 
     protected function casts(): array
     {
@@ -20,14 +22,9 @@ class Subject extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function questions()
+    public function users()
     {
-        return $this->hasMany(Question::class);
-    }
-
-    public function quizAttempts()
-    {
-        return $this->hasMany(QuizAttempt::class);
+        return $this->hasMany(User::class, 'class_id');
     }
 
     public function scopeActive($query)

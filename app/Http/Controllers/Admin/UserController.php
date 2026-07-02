@@ -9,13 +9,12 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = User::query();
+        $query = User::query()->with('schoolClass.department');
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -28,12 +27,14 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        if ($request->filled('class_name')) {
-            $query->where('class_name', $request->class_name);
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->class_id);
         }
 
-        if ($request->filled('generation')) {
-            $query->where('generation', $request->generation);
+        if ($request->filled('department_id')) {
+            $query->whereHas('schoolClass', function ($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
         }
 
         $users = $query->withCount('quizAttempts')
@@ -53,12 +54,15 @@ class UserController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($request->class_id === '') {
+            $request->merge(['class_id' => null]);
+        }
+
         $validated = $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email'],
-            'password'   => ['required', 'string', 'min:8', 'confirmed'],
-            'class_name' => ['nullable', 'string', 'max:100'],
-            'generation' => ['nullable', 'string', 'max:100'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'class_id' => ['nullable', 'integer', 'exists:classes,id'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -74,17 +78,20 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        return response()->json(new UserResource($user->load('quizAttempts')));
+        return response()->json(new UserResource($user->load(['quizAttempts', 'schoolClass.department'])));
     }
 
     public function update(Request $request, User $user): JsonResponse
     {
+        if ($request->class_id === '') {
+            $request->merge(['class_id' => null]);
+        }
+
         $validated = $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'email', 'unique:users,email,' . $user->id],
-            'class_name' => ['nullable', 'string', 'max:100'],
-            'generation' => ['nullable', 'string', 'max:100'],
-            'password'   => ['nullable', 'string', 'min:8', 'confirmed'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'unique:users,email,' . $user->id],
+            'class_id' => ['nullable', 'integer', 'exists:classes,id'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
         if (!empty($validated['password'])) {
@@ -117,28 +124,6 @@ class UserController extends Controller
             'is_active' => $user->is_active,
             'user' => new UserResource($user),
         ]);
-    }
-
-    public function classOptions(): JsonResponse
-    {
-        $classes = User::whereNotNull('class_name')
-            ->where('class_name', '!=', '')
-            ->distinct()
-            ->orderBy('class_name')
-            ->pluck('class_name');
-
-        return response()->json($classes);
-    }
-
-    public function generationOptions(): JsonResponse
-    {
-        $generations = User::whereNotNull('generation')
-            ->where('generation', '!=', '')
-            ->distinct()
-            ->orderBy('generation')
-            ->pluck('generation');
-
-        return response()->json($generations);
     }
 
     public function attempts(User $user): JsonResponse

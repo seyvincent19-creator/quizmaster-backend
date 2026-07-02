@@ -36,8 +36,8 @@ class ReportController extends Controller
                     'id' => $a->user?->id,
                     'name' => $a->user?->name ?? 'Unknown User',
                     'email' => $a->user?->email,
-                    'class_name' => $a->user?->class_name,
-                    'generation' => $a->user?->generation,
+                    'class_name' => $a->user?->schoolClass?->name,
+                    'generation' => $a->user?->schoolClass?->generation,
                 ],
                 'subject_name' => $a->subject?->name ?? 'All Subjects',
                 'score' => $a->score,
@@ -66,12 +66,11 @@ class ReportController extends Controller
     {
         $data = QuizAttempt::query()
             ->join('users', 'quiz_attempts.user_id', '=', 'users.id')
-            ->whereNotNull('users.class_name')
-            ->where('users.class_name', '!=', '')
+            ->join('classes', 'users.class_id', '=', 'classes.id')
             ->where('quiz_attempts.status', 'completed')
-            ->groupBy('users.class_name')
-            ->selectRaw('users.class_name, COUNT(quiz_attempts.id) as total_attempts, ROUND(AVG(quiz_attempts.score * 100.0 / quiz_attempts.total_questions), 1) as avg_score, ROUND(SUM(CASE WHEN quiz_attempts.score >= quiz_attempts.total_questions * 0.5 THEN 1 ELSE 0 END) * 100.0 / COUNT(quiz_attempts.id), 1) as pass_rate')
-            ->orderBy('users.class_name')
+            ->groupBy('classes.name')
+            ->selectRaw('classes.name as class_name, COUNT(quiz_attempts.id) as total_attempts, ROUND(AVG(quiz_attempts.score * 100.0 / quiz_attempts.total_questions), 1) as avg_score, ROUND(SUM(CASE WHEN quiz_attempts.score >= quiz_attempts.total_questions * 0.5 THEN 1 ELSE 0 END) * 100.0 / COUNT(quiz_attempts.id), 1) as pass_rate')
+            ->orderBy('classes.name')
             ->get();
 
         return response()->json($data);
@@ -81,12 +80,13 @@ class ReportController extends Controller
     {
         $data = QuizAttempt::query()
             ->join('users', 'quiz_attempts.user_id', '=', 'users.id')
-            ->whereNotNull('users.generation')
-            ->where('users.generation', '!=', '')
+            ->join('classes', 'users.class_id', '=', 'classes.id')
+            ->whereNotNull('classes.generation')
+            ->where('classes.generation', '!=', '')
             ->where('quiz_attempts.status', 'completed')
-            ->groupBy('users.generation')
-            ->selectRaw('users.generation, COUNT(quiz_attempts.id) as total_attempts, ROUND(AVG(quiz_attempts.score * 100.0 / quiz_attempts.total_questions), 1) as avg_score, ROUND(SUM(CASE WHEN quiz_attempts.score >= quiz_attempts.total_questions * 0.5 THEN 1 ELSE 0 END) * 100.0 / COUNT(quiz_attempts.id), 1) as pass_rate')
-            ->orderBy('users.generation')
+            ->groupBy('classes.generation')
+            ->selectRaw('classes.generation, COUNT(quiz_attempts.id) as total_attempts, ROUND(AVG(quiz_attempts.score * 100.0 / quiz_attempts.total_questions), 1) as avg_score, ROUND(SUM(CASE WHEN quiz_attempts.score >= quiz_attempts.total_questions * 0.5 THEN 1 ELSE 0 END) * 100.0 / COUNT(quiz_attempts.id), 1) as pass_rate')
+            ->orderBy('classes.generation')
             ->get();
 
         return response()->json($data);

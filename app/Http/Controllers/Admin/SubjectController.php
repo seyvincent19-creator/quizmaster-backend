@@ -9,11 +9,17 @@ use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $subjects = Subject::withCount(['questions', 'questions as active_questions_count' => function ($q) {
+        $query = Subject::with('department')->withCount(['questions', 'questions as active_questions_count' => function ($q) {
             $q->where('is_active', true);
-        }])->orderBy('name')->get();
+        }]);
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        $subjects = $query->orderBy('name')->get();
 
         return response()->json(['data' => $subjects]);
     }
@@ -22,26 +28,28 @@ class SubjectController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:subjects,name'],
+            'department_id' => ['required', 'integer', 'exists:departments,id'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);
 
         $subject = Subject::create($validated);
 
-        return response()->json($subject, 201);
+        return response()->json($subject->load('department'), 201);
     }
 
     public function update(Request $request, Subject $subject): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:subjects,name,' . $subject->id],
+            'department_id' => ['required', 'integer', 'exists:departments,id'],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);
 
         $subject->update($validated);
 
-        return response()->json($subject->fresh());
+        return response()->json($subject->fresh()->load('department'));
     }
 
     public function destroy(Subject $subject): JsonResponse
@@ -61,6 +69,6 @@ class SubjectController extends Controller
     {
         $subject->update(['is_active' => !$subject->is_active]);
 
-        return response()->json($subject->fresh());
+        return response()->json($subject->fresh()->load('department'));
     }
 }

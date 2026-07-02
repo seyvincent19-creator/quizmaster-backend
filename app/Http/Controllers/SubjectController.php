@@ -4,15 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Subject;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $subjects = Subject::active()
+        $query = Subject::active()
             ->withCount(['questions as active_questions_count' => function ($q) {
                 $q->where('is_active', true);
-            }])
+            }]);
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        $subjects = $query
             ->orderBy('name')
             ->get()
             ->map(fn($s) => [

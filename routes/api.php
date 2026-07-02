@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\ClassController as AdminClassController;
+use App\Http\Controllers\Admin\DepartmentController as AdminDepartmentController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SubjectController as AdminSubjectController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\UserAuthController;
+use App\Http\Controllers\ClassController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 // PUBLIC ROUTES
 // ==========================================
 Route::get('subjects', [SubjectController::class, 'index']);
+Route::get('departments', [DepartmentController::class, 'index']);
+Route::get('classes', [ClassController::class, 'index']);
 
 // ==========================================
 // USER AUTH ROUTES
@@ -66,8 +72,6 @@ Route::prefix('admin')->group(function () {
         // Users (Students)
         Route::get('users', [UserController::class, 'index']);
         Route::post('users', [UserController::class, 'store']);
-        Route::get('users/class-options', [UserController::class, 'classOptions']);
-        Route::get('users/generation-options', [UserController::class, 'generationOptions']);
         Route::get('users/{user}', [UserController::class, 'show']);
         Route::put('users/{user}', [UserController::class, 'update']);
         Route::delete('users/{user}', [UserController::class, 'destroy']);
@@ -89,5 +93,19 @@ Route::prefix('admin')->group(function () {
         Route::put('subjects/{subject}', [AdminSubjectController::class, 'update']);
         Route::delete('subjects/{subject}', [AdminSubjectController::class, 'destroy']);
         Route::put('subjects/{subject}/toggle-active', [AdminSubjectController::class, 'toggleActive']);
+
+        // Departments
+        Route::get('departments', [AdminDepartmentController::class, 'index']);
+        Route::post('departments', [AdminDepartmentController::class, 'store']);
+        Route::put('departments/{department}', [AdminDepartmentController::class, 'update']);
+        Route::delete('departments/{department}', [AdminDepartmentController::class, 'destroy']);
+        Route::put('departments/{department}/toggle-active', [AdminDepartmentController::class, 'toggleActive']);
+
+        // Classes
+        Route::get('classes', [AdminClassController::class, 'index']);
+        Route::post('classes', [AdminClassController::class, 'store']);
+        Route::put('classes/{schoolClass}', [AdminClassController::class, 'update']);
+        Route::delete('classes/{schoolClass}', [AdminClassController::class, 'destroy']);
+        Route::put('classes/{schoolClass}/toggle-active', [AdminClassController::class, 'toggleActive']);
     });
 });

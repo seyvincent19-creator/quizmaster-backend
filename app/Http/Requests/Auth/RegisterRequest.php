@@ -11,12 +11,18 @@ class RegisterRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->class_id === '') {
+            $this->merge(['class_id' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'class_name' => ['nullable', 'string', 'max:50'],
-            'generation' => ['nullable', 'string', 'max:50'],
+            'class_id' => ['nullable', 'integer', 'exists:classes,id'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];

@@ -13,8 +13,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'class_name',
-        'generation',
+        'class_id',
         'email',
         'password',
         'is_active',
@@ -36,5 +35,10 @@ class User extends Authenticatable
     public function quizAttempts()
     {
         return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function schoolClass()
+    {
+        return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 }

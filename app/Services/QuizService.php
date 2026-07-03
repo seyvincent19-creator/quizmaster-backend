@@ -167,31 +167,16 @@ class QuizService
         });
     }
 
-    public function getResult(QuizAttempt $attempt): array
+    public function getResult(QuizAttempt $attempt, bool $includeReview = true): array
     {
         $answers = $attempt->answers()
             ->with('question')
             ->orderBy('id')
             ->get();
 
-        $answerData = $answers->map(fn($a) => [
-            'question_id' => $a->question_id,
-            'question_text' => $a->question->question_text,
-            'choice_a' => $a->question->choice_a,
-            'choice_b' => $a->question->choice_b,
-            'choice_c' => $a->question->choice_c,
-            'choice_d' => $a->question->choice_d,
-            'correct_choice' => $a->question->correct_choice,
-            'explanation' => $a->question->explanation,
-            'selected_choice' => $a->selected_choice,
-            'is_correct' => $a->is_correct,
-            'time_taken_seconds' => $a->time_taken_seconds,
-            'is_locked' => $a->is_locked,
-        ]);
-
         $locked = $answers->where('is_locked', true);
 
-        return [
+        $result = [
             'attempt' => [
                 'id' => $attempt->id,
                 'attempt_code' => $attempt->attempt_code,
@@ -206,8 +191,26 @@ class QuizService
                 'unanswered_count' => $locked->whereNull('selected_choice')->count(),
                 'avg_time_seconds' => round($locked->avg('time_taken_seconds'), 2),
             ],
-            'answers' => $answerData,
         ];
+
+        if ($includeReview) {
+            $result['answers'] = $answers->map(fn($a) => [
+                'question_id' => $a->question_id,
+                'question_text' => $a->question->question_text,
+                'choice_a' => $a->question->choice_a,
+                'choice_b' => $a->question->choice_b,
+                'choice_c' => $a->question->choice_c,
+                'choice_d' => $a->question->choice_d,
+                'correct_choice' => $a->question->correct_choice,
+                'explanation' => $a->question->explanation,
+                'selected_choice' => $a->selected_choice,
+                'is_correct' => $a->is_correct,
+                'time_taken_seconds' => $a->time_taken_seconds,
+                'is_locked' => $a->is_locked,
+            ]);
+        }
+
+        return $result;
     }
 
     public function getHistory(User|Admin $actor)

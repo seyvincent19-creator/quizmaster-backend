@@ -94,7 +94,7 @@ class QuizController extends Controller
             return response()->json(['message' => 'Quiz is not yet completed.'], 422);
         }
 
-        $result = $this->quizService->getResult($attempt);
+        $result = $this->quizService->getResult($attempt, $actor instanceof \App\Models\Admin);
         return response()->json($result);
     }
 
@@ -178,6 +178,7 @@ class QuizController extends Controller
             ->firstOrFail();
 
         $data = $this->reportService->getAttemptReportData($attempt);
+        $data['show_answers'] = $actor instanceof \App\Models\Admin;
 
         $pdf = Pdf::loadView('pdf.attempt_report', $data);
         $pdf->setPaper('A4', 'landscape');
@@ -195,7 +196,7 @@ class QuizController extends Controller
             ->firstOrFail();
 
         return Excel::download(
-            new AttemptReportExport($attempt),
+            new AttemptReportExport($attempt, $actor instanceof \App\Models\Admin),
             "quiz-report-{$attemptCode}.xlsx"
         );
     }

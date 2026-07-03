@@ -12,14 +12,17 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class AttemptReportExport implements WithMultipleSheets
 {
-    public function __construct(protected QuizAttempt $attempt) {}
+    public function __construct(protected QuizAttempt $attempt, protected bool $showAnswers = true) {}
 
     public function sheets(): array
     {
-        return [
-            'Summary' => new AttemptSummarySheet($this->attempt),
-            'Answers' => new AttemptAnswersSheet($this->attempt),
-        ];
+        $sheets = ['Summary' => new AttemptSummarySheet($this->attempt)];
+
+        if ($this->showAnswers) {
+            $sheets['Answers'] = new AttemptAnswersSheet($this->attempt);
+        }
+
+        return $sheets;
     }
 }
 
@@ -37,7 +40,7 @@ class AttemptSummarySheet implements FromCollection, WithHeadings, WithTitle, Wi
     public function collection()
     {
         $attempt = $this->attempt;
-        $user = $attempt->user;
+        $user = $attempt->user ?? $attempt->admin;
         $answers = $attempt->answers()->where('is_locked', true);
         $correct = (clone $answers)->where('is_correct', true)->count();
         $incorrect = (clone $answers)->where('is_correct', false)->whereNotNull('selected_choice')->count();

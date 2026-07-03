@@ -58,6 +58,7 @@
         <tr><td>Avg Time per Question</td><td>{{ $avg_time }} seconds</td></tr>
     </table>
 
+    @if($show_answers ?? true)
     <div class="page-break"></div>
 
     <h2>Answer Review</h2>
@@ -95,5 +96,6 @@
             @endforeach
         </tbody>
     </table>
+    @endif
 </body>
 </html>

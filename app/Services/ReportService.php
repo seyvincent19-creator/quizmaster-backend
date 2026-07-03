@@ -154,7 +154,7 @@ class ReportService
         $unanswered = $locked->whereNull('selected_choice')->count();
 
         return [
-            'user' => $attempt->user,
+            'user' => $attempt->user ?? $attempt->admin,
             'attempt' => $attempt,
             'correct' => $correct,
             'incorrect' => $incorrect,

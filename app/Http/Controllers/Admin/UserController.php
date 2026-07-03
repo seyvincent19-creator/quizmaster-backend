@@ -39,7 +39,7 @@ class UserController extends Controller
 
         $users = $query->withCount('quizAttempts')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(10);
 
         return response()->json([
             'data' => $users->items(),
